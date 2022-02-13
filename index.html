@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+
+<body>
+  111
+  <script src="dist/umd/vue.js">
+  </script>
+  <script>
+    let vm = new Vue({
+      el: "#app",
+      data: {
+        name: "张三",
+        arr:[1,2,3,4],
+        arrObj:[{a:1}]
+      }
+    })
+
+    vm._data.arrObj.push({b:1})
+    vm._data.arrObj[1].b=100
+    vm._data.arrObj.splice(1)
+  </script>
+</body>
+
+</html>

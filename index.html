@@ -9,7 +9,14 @@
 </head>
 
 <body>
-  111
+  <div id="app">
+    {{arr}}
+    <ul>
+      <li>{{name}}</li>
+      <li>{{obj.name}}</li>
+      <li>{{obj.age}}</li>
+    </ul>
+  </div>
   <script src="dist/umd/vue.js">
   </script>
   <script>
@@ -17,14 +24,27 @@
       el: "#app",
       data: {
         name: "张三",
+        obj:{age:18,name:"李四"},
         arr:[1,2,3,4],
         arrObj:[{a:1}]
-      }
+      },
+      // render(h){
+      //   return h('div',{id:'app'},'hello vue2')
+      // },
+      template:`<div id="app">hello vue2</div>`
     })
+    //  1. 状态 属性拦截
+    // vm._data.arrObj.push({b:1})
+    // vm._data.arrObj[1].b=100
+    // vm._data.arrObj.splice(1)
+    // vm.arr=[2,4]
+    // console.log(vm.arr);
 
-    vm._data.arrObj.push({b:1})
-    vm._data.arrObj[1].b=100
-    vm._data.arrObj.splice(1)
+    // 2.模版渲染
+    // 渲染操作：先找render方法，如果没有render方法 会查找tamplate选项,如果还没有tamplate，最后找el选项在指定元素中进行渲染
+    //ast解析tamplate 》 render函数
+
+    
   </script>
 </body>
 

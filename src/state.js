@@ -4,7 +4,6 @@ import { proxy } from './util'
 export function initState(vm) {
   //vm.$options
   const opts = vm.$options
-
   if (opts.props) {
     initProps(vm, opts.props)
   }
@@ -38,7 +37,7 @@ function initData(vm) {
    }
   observe(data)
 }
-function initComputed() {
-  vm
+function initComputed(vm) {
+  
 }
 function initWatch(vm) {}

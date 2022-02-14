@@ -10,12 +10,12 @@ export default {
     file:"dist/umd/vue.js",//输出的文件
     sourcemap:true,//转换前后的映射
   },
-  plugin:[
+  plugins:[
     babel({
       exclude:"node_modules/**"
     }),
     serve({
-      open:true,
+      // open:true,//是否自动打开浏览器
       port:3000,
       contentBase:'',
       openPage:"/index.html"

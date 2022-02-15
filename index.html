@@ -10,12 +10,13 @@
 
 <body>
   <div id="app">
-    {{arr}}
+   hello vue2 {{arr}}
     <ul>
       <li>{{name}}</li>
       <li>{{obj.name}}</li>
       <li>{{obj.age}}</li>
     </ul>
+    endString
   </div>
   <script src="dist/umd/vue.js">
   </script>
@@ -31,7 +32,7 @@
       // render(h){
       //   return h('div',{id:'app'},'hello vue2')
       // },
-      template:`<div id="app">hello vue2</div>`
+      // template:`<div id="app">hello vue2 </div>`
     })
     //  1. 状态 属性拦截
     // vm._data.arrObj.push({b:1})

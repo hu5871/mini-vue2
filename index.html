@@ -21,6 +21,16 @@
   <script src="dist/umd/vue.js">
   </script>
   <script>
+    Vue.mixin({
+      created:function a(){
+        console.log("mixin混入a ,created")
+      }
+    })
+    Vue.mixin({
+      created:function b(){
+        console.log("mixin混入b ,created")
+      }
+    })
     let vm = new Vue({
       el: "#app",
       data: {
@@ -29,6 +39,10 @@
         arr:[1,2,3,4],
         arrObj:[{a:1}]
       },
+      created(){
+         console.log("跟选项created")
+         console.log(this.obj);
+      }
       // render(h){
       //   return h('div',{id:'app'},'hello vue2')
       // },

@@ -4,6 +4,96 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Vue = factory());
 })(this, (function () { 'use strict';
 
+  function proxy(vm, data, key) {
+    Object.defineProperty(vm, key, {
+      get: function get() {
+        // vm.a
+        return vm[data][key]; //vm._data.a
+      },
+      set: function set(newVal) {
+        // vm.a=100
+        vm[data][key] = newVal; // vm._data.a=100
+      }
+    });
+  }
+  function def(obj, key, val) {
+    Object.defineProperty(obj, key, {
+      enumerable: false,
+      //不可枚举
+      configurable: false,
+      //不可修改
+      value: val //onserver实例
+
+    });
+  }
+  var LIFECYCLE_HOOKS = ['beforeCreate', 'created', 'beforeMount', 'mounted', 'beforeUpdate', 'updated', 'beforeDestroy', 'destroyed'];
+  var strats = {};
+
+  strats.data = function (parentVal, childVal) {
+    return childVal;
+  };
+
+  strats.computed = function () {};
+
+  strats.watch = function () {};
+
+  LIFECYCLE_HOOKS.forEach(function (hook) {
+    strats[hook] = mergeHook;
+  });
+  console.log(strats);
+
+  function mergeHook(parentVal, childVal) {
+    //生命周期合并
+    //最终合并的是一个数组
+    if (childVal) {
+      //儿子有值 合并父亲的
+      if (parentVal) {
+        //儿子 、 父亲也有
+        return parentVal.concat(childVal);
+      } else {
+        //只有儿子有
+        return [childVal]; //父亲是options 儿子就是mixin  第一次父亲是空对象 {}  第二个是{create:function}
+      }
+    } else {
+      //父亲直接return 因为不需要考虑儿子了
+      return parentVal;
+    }
+  }
+
+  function mergeOptions(parent, child) {
+    var options = {}; //遍历父亲，可能父亲有，儿子没有
+
+    for (var key in parent) {
+      mergeField(key);
+    } //  儿子有，父亲没有
+
+
+    for (var _key in child) {
+      if (!parent.hasOwnProperty(_key)) {
+        mergeField(_key);
+      }
+    }
+
+    function mergeField(key) {
+      //  根据key做不同的策略来进行合并
+      if (strats[key]) {
+        options[key] = strats[key](parent[key], child[key]);
+      } else {
+        options[key] = child[key];
+      }
+    }
+
+    return options;
+  }
+
+  function initGlobalApi(Vue) {
+    Vue.options = {};
+
+    Vue.mixin = function (mixin) {
+      this.options = mergeOptions(this.options, mixin); //选项合并：把用户传进来的选贤合并到当前的options上
+    };
+  }
+
   function _typeof(obj) {
     "@babel/helpers - typeof";
 
@@ -267,7 +357,7 @@
   }
 
   function genProps(attrs) {
-    console.log(attrs);
+    // console.log(attrs)
     var str = '';
 
     var _loop = function _loop() {
@@ -359,8 +449,8 @@
 
     var code = generate(ast); // 3.将字符串转换成函数
 
-    var render = new Function("with(this){return ".concat(code, "}"));
-    console.log(render);
+    var render = new Function("with(this){return ".concat(code, "}")); // console.log(render);
+
     return render;
   }
 
@@ -405,8 +495,6 @@
           el.style[styleName] = newProps.style[styleName];
         }
       } else if (key === "class") {
-        console.log(key);
-        console.log(newProps);
         el.className = newProps[key];
       } else {
         el.setAttribute(key, newProps[key]);
@@ -422,32 +510,21 @@
     };
   }
   function mountComponent(vm, el) {
-    // 调用render渲染el属性
+    callHook(vm, 'beforeMount'); // 调用render渲染el属性
     //先调用render方法创建虚拟节点，再见虚拟节点渲染到页面
+
     vm._update(vm._render());
-  }
 
-  function proxy(vm, data, key) {
-    Object.defineProperty(vm, key, {
-      get: function get() {
-        // vm.a 
-        return vm[data][key]; //vm._data.a  
-      },
-      set: function set(newVal) {
-        // vm.a=100
-        vm[data][key] = newVal; // vm._data.a=100
+    callHook(vm, 'mounted');
+  }
+  function callHook(vm, hook) {
+    var handlers = vm.$options[hook];
+
+    if (handlers) {
+      for (var i = 0; i < handlers.length; i++) {
+        handlers[i].call(vm);
       }
-    });
-  }
-  function def(obj, key, val) {
-    Object.defineProperty(obj, key, {
-      enumerable: false,
-      //不可枚举
-      configurable: false,
-      //不可修改
-      value: val //onserver实例
-
-    });
+    }
   }
 
   var arrayProto = Array.prototype; //拿到数组原型上的方法
@@ -597,10 +674,16 @@
 
   function initMixin(Vue) {
     Vue.prototype._init = function (options) {
-      var vm = this;
-      vm.$options = options; // 初始化状态,data、props、watch、computed
+      var vm = this; // _init可能被子组件调用
+      //所以需要拿到当前实例的构造函数，如果是子类调用就是子类构造函数
+
+      vm.$options = mergeOptions(vm.constructor.options, options); //将用户自定义的options和全局的options进行合并
+
+      callHook(vm, 'beforeCreate');
+      console.log(vm.$options); // 初始化状态,data、props、watch、computed
 
       initState(vm);
+      callHook(vm, 'created');
 
       if (vm.$options.el) {
         vm.$mount(vm.$options.el);
@@ -695,11 +778,14 @@
   function Vue(options) {
     // console.log(options)
     this._init(options);
-  }
+  } //原型方法
+
 
   initMixin(Vue);
   lifecycleMixin(Vue);
-  renderMixin(Vue);
+  renderMixin(Vue); //静态方法
+
+  initGlobalApi(Vue);
 
   return Vue;
 

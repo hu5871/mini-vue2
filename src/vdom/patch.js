@@ -34,8 +34,6 @@ function updateProperties(vnode){
          el.style[styleName]=newProps.style[styleName]
       }
     }else if(key=== "class"){
-      console.log(key);
-      console.log(newProps);
       el.className=newProps[key]
     }else{
       el.setAttribute(key,newProps[key])

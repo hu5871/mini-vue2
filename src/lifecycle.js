@@ -1,5 +1,6 @@
 import { patch } from "./vdom/patch";
 
+
 export function lifecycleMixin(Vue){
   Vue.prototype._update = function (vnode){
      console.log(vnode);
@@ -9,8 +10,18 @@ export function lifecycleMixin(Vue){
 }
 
 export function mountComponent(vm,el){
+  callHook(vm,'beforeMount')
   // 调用render渲染el属性
-
   //先调用render方法创建虚拟节点，再见虚拟节点渲染到页面
   vm._update(vm._render())
+  callHook(vm,'mounted')
+}
+
+export function callHook(vm,hook){
+    const handlers=vm.$options[hook]
+    if(handlers){
+      for(let i=0;i<handlers.length;i++){
+        handlers[i].call(vm)
+      }
+    }
 }

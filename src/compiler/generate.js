@@ -11,7 +11,7 @@ export function generate(ast) {
 }
 
 function genProps(attrs) {
-  console.log(attrs)
+  // console.log(attrs)
   let str = ''
   for (var i = 0; i < attrs.length; i++) {
     let attr = attrs[i]

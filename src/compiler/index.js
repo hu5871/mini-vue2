@@ -17,6 +17,6 @@ export function compileToFunctions(template) {
    let code=generate(ast)
   // 3.将字符串转换成函数
   let render=new Function(`with(this){return ${code}}`)
-  console.log(render);
+  // console.log(render);
   return render
 }

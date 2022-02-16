@@ -1,15 +1,18 @@
 import { compileToFunctions } from './compiler/index'
-import { mountComponent } from './lifecycle'
+import { callHook, mountComponent } from './lifecycle'
 import { initState } from './state'
+import { mergeOptions } from './util'
 export function initMixin(Vue) {
   Vue.prototype._init = function (options) {
     const vm = this
-
-    vm.$options = options
-
+    // _init可能被子组件调用
+    //所以需要拿到当前实例的构造函数，如果是子类调用就是子类构造函数
+    vm.$options = mergeOptions(vm.constructor.options, options) //将用户自定义的options和全局的options进行合并
+    callHook(vm,'beforeCreate')
+    console.log(vm.$options)
     // 初始化状态,data、props、watch、computed
     initState(vm)
-
+    callHook(vm,'created')
     if (vm.$options.el) {
       vm.$mount(vm.$options.el)
     }
@@ -21,11 +24,13 @@ export function initMixin(Vue) {
     el = document.querySelector(el)
     vm.$el = el
     const options = vm.$options
-    if (!options.render) {//没有render
+    if (!options.render) {
+      //没有render
       //  将template转换成render方法
       let template = options.template
       if (template) {
-      } else if (el) {//有el
+      } else if (el) {
+        //有el
         if (el.outerHTML) {
           //考虑兼容性问题
           template = el.outerHTML
@@ -42,6 +47,6 @@ export function initMixin(Vue) {
       //  有render
     }
     // 需要挂在这个组件
-    mountComponent(vm,el)
+    mountComponent(vm, el)
   }
 }

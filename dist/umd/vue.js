@@ -364,8 +364,62 @@
     return render;
   }
 
+  function patch(oldVnode, vnode) {
+    // 将虚拟节点转换成真实节点
+    var el = createElm(vnode); //产生真实的dom
+
+    var parentNode = oldVnode.parentNode; //获取老的app的父元素 》 body
+
+    parentNode.insertBefore(el, oldVnode.nextSibling); //当前的真实元素插入到app的后面
+
+    parentNode.removeChild(oldVnode); //删除老的节点
+  }
+
+  function createElm(vnode) {
+    var tag = vnode.tag,
+        children = vnode.children;
+        vnode.key;
+        vnode.data;
+        var text = vnode.text; // console.log(vnode)
+
+    if (typeof tag === 'string') {
+      vnode.el = document.createElement(tag);
+      updateProperties(vnode);
+      children.forEach(function (child) {
+        vnode.el.appendChild(createElm(child));
+      });
+    } else {
+      vnode.el = document.createTextNode(text);
+    }
+
+    return vnode.el;
+  }
+
+  function updateProperties(vnode) {
+    var el = vnode.el;
+    var newProps = vnode.data || {};
+
+    for (var key in newProps) {
+      if (key === 'style') {
+        for (var styleName in newProps[key]) {
+          el.style[styleName] = newProps.style[styleName];
+        }
+      } else if (key === "class") {
+        console.log(key);
+        console.log(newProps);
+        el.className = newProps[key];
+      } else {
+        el.setAttribute(key, newProps[key]);
+      }
+    }
+  }
+
   function lifecycleMixin(Vue) {
-    Vue.prototype._update = function (vnode) {};
+    Vue.prototype._update = function (vnode) {
+      console.log(vnode);
+      var vm = this;
+      patch(vm.$el, vnode);
+    };
   }
   function mountComponent(vm, el) {
     // 调用render渲染el属性
@@ -557,6 +611,7 @@
       //  挂载操作
       var vm = this;
       el = document.querySelector(el);
+      vm.$el = el;
       var options = vm.$options;
 
       if (!options.render) {
@@ -607,7 +662,6 @@
       var vm = this;
       var render = vm.$options.render;
       var vnode = render.call(this);
-      console.log(vnode);
       return vnode;
     };
   }

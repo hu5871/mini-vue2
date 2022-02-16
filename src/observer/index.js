@@ -32,14 +32,14 @@ function defineReactive(obj, key, value) {
   observe(value)
   Object.defineProperty(obj, key, {
     get() {
-      console.log('get', value)
+      // console.log('get', value)
       return value
     },
     set(newVal) {
       if (newVal === value) return
       observe(newVal) //如果用户将值改为对象继续拦截添加set和get
       value = newVal
-      console.log('set', value)
+      // console.log('set', value)
     },
   })
 }

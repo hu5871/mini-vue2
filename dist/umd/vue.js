@@ -119,7 +119,7 @@
 
     function createASTElement(tagName, attrs) {
       return {
-        tag: tagName,
+        tag: JSON.stringify(tagName),
         //标签名
         type: 1,
         //元素类型
@@ -133,7 +133,7 @@
     }
 
     function start(tagName, attrs) {
-      // console.log('start',tagName,attrs)
+      // console.log('start',typeof tagName,attrs)
       var element = createASTElement(tagName, attrs);
 
       if (!root) {
@@ -261,8 +261,8 @@
   function generate(ast) {
     // console.log(ast)
     var children = genChildren(ast);
-    var code = "_c(".concat(ast.tag, ",").concat(ast.attrs.length ? genProps(ast.attrs) : undefined).concat(children ? ",".concat(children) : '', ")");
-    console.log(code);
+    var code = "_c(".concat(ast.tag, ",").concat(ast.attrs.length ? genProps(ast.attrs) : undefined).concat(children ? ",".concat(children) : '', ")"); // console.log(code)
+
     return code;
   }
 
@@ -362,6 +362,15 @@
     var render = new Function("with(this){return ".concat(code, "}"));
     console.log(render);
     return render;
+  }
+
+  function lifecycleMixin(Vue) {
+    Vue.prototype._update = function (vnode) {};
+  }
+  function mountComponent(vm, el) {
+    // 调用render渲染el属性
+    //先调用render方法创建虚拟节点，再见虚拟节点渲染到页面
+    vm._update(vm._render());
   }
 
   function proxy(vm, data, key) {
@@ -464,15 +473,14 @@
     observe(value);
     Object.defineProperty(obj, key, {
       get: function get() {
-        console.log('get', value);
+        // console.log('get', value)
         return value;
       },
       set: function set(newVal) {
         if (newVal === value) return;
         observe(newVal); //如果用户将值改为对象继续拦截添加set和get
 
-        value = newVal;
-        console.log('set', value);
+        value = newVal; // console.log('set', value)
       }
     });
   }
@@ -536,7 +544,7 @@
   function initMixin(Vue) {
     Vue.prototype._init = function (options) {
       var vm = this;
-      vm.$options = options; // 初始化状态,data、props、watch、computed 
+      vm.$options = options; // 初始化状态,data、props、watch、computed
 
       initState(vm);
 
@@ -552,10 +560,12 @@
       var options = vm.$options;
 
       if (!options.render) {
+        //没有render
         //  将template转换成render方法
         var template = options.template;
 
         if (template) ; else if (el) {
+          //有el
           if (el.outerHTML) {
             //考虑兼容性问题
             template = el.outerHTML;
@@ -565,15 +575,66 @@
 
             template = container.innerHTML;
           }
-        } // 拿到模版
+        } //将模版编译成render函数
 
 
-        if (template) {
-          //将模版编译成render函数
-          var render = compileToFunctions(template);
-          options.render = render;
-        }
-      }
+        var render = compileToFunctions(template);
+        options.render = render;
+      } // 需要挂在这个组件
+
+
+      mountComponent(vm);
+    };
+  }
+
+  function renderMixin(Vue) {
+    Vue.prototype._c = function () {
+      //创建元素
+      return createElement.apply(void 0, arguments);
+    };
+
+    Vue.prototype._s = function (val) {
+      //stringify
+      return val == null ? '' : _typeof(val) == 'object' ? JSON.stringify(val) : val;
+    };
+
+    Vue.prototype._v = function (text) {
+      //创建虚拟文本元素
+      return createTextVnode(text);
+    };
+
+    Vue.prototype._render = function () {
+      var vm = this;
+      var render = vm.$options.render;
+      var vnode = render.call(this);
+      console.log(vnode);
+      return vnode;
+    };
+  }
+
+  function createElement(tag) {
+    var data = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+    for (var _len = arguments.length, children = new Array(_len > 2 ? _len - 2 : 0), _key = 2; _key < _len; _key++) {
+      children[_key - 2] = arguments[_key];
+    }
+
+    // console.log(arguments);
+    return vnode(tag, data, data === null || data === void 0 ? void 0 : data.key, children);
+  }
+
+  function createTextVnode(text) {
+    // console.log(text);
+    return vnode(undefined, undefined, undefined, undefined, text);
+  }
+
+  function vnode(tag, data, key, children, text) {
+    return {
+      tag: tag,
+      data: data,
+      key: key,
+      children: children,
+      text: text
     };
   }
 
@@ -583,6 +644,8 @@
   }
 
   initMixin(Vue);
+  lifecycleMixin(Vue);
+  renderMixin(Vue);
 
   return Vue;
 

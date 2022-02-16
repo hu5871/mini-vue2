@@ -14,7 +14,7 @@ export function parseHTML(html) {
   let stack=[]
   function createASTElement(tagName, attrs) {
     return {
-      tag: tagName,//标签名
+      tag: JSON.stringify(tagName),//标签名
       type: 1,//元素类型
       children: [],//子元素列表
       attrs,//属性列表
@@ -23,7 +23,7 @@ export function parseHTML(html) {
   }
 
   function start(tagName, attrs) {
-    // console.log('start',tagName,attrs)
+    // console.log('start',typeof tagName,attrs)
     const element = createASTElement(tagName, attrs)
     if(!root){
       root = element

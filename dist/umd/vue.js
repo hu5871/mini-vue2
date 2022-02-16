@@ -4,18 +4,100 @@
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Vue = factory());
 })(this, (function () { 'use strict';
 
-  function compileToFunctions(template) {
-    // html模版 =》 render函数
-    //1.将html代码转化成ast语法树
-    //  <div id="app"></div>
-    //  {
-    //    attrs:[{id:'app'}],
-    //    tag:'div',
-    //    children:[]
-    //  }
-    var ast = parseHTML(template);
-    console.log(ast); // 2.通过ast语法树重新生成代码
+  function _typeof(obj) {
+    "@babel/helpers - typeof";
+
+    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
+      return typeof obj;
+    } : function (obj) {
+      return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
+    }, _typeof(obj);
   }
+
+  function _classCallCheck(instance, Constructor) {
+    if (!(instance instanceof Constructor)) {
+      throw new TypeError("Cannot call a class as a function");
+    }
+  }
+
+  function _defineProperties(target, props) {
+    for (var i = 0; i < props.length; i++) {
+      var descriptor = props[i];
+      descriptor.enumerable = descriptor.enumerable || false;
+      descriptor.configurable = true;
+      if ("value" in descriptor) descriptor.writable = true;
+      Object.defineProperty(target, descriptor.key, descriptor);
+    }
+  }
+
+  function _createClass(Constructor, protoProps, staticProps) {
+    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
+    if (staticProps) _defineProperties(Constructor, staticProps);
+    Object.defineProperty(Constructor, "prototype", {
+      writable: false
+    });
+    return Constructor;
+  }
+
+  function _slicedToArray(arr, i) {
+    return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _unsupportedIterableToArray(arr, i) || _nonIterableRest();
+  }
+
+  function _arrayWithHoles(arr) {
+    if (Array.isArray(arr)) return arr;
+  }
+
+  function _iterableToArrayLimit(arr, i) {
+    var _i = arr == null ? null : typeof Symbol !== "undefined" && arr[Symbol.iterator] || arr["@@iterator"];
+
+    if (_i == null) return;
+    var _arr = [];
+    var _n = true;
+    var _d = false;
+
+    var _s, _e;
+
+    try {
+      for (_i = _i.call(arr); !(_n = (_s = _i.next()).done); _n = true) {
+        _arr.push(_s.value);
+
+        if (i && _arr.length === i) break;
+      }
+    } catch (err) {
+      _d = true;
+      _e = err;
+    } finally {
+      try {
+        if (!_n && _i["return"] != null) _i["return"]();
+      } finally {
+        if (_d) throw _e;
+      }
+    }
+
+    return _arr;
+  }
+
+  function _unsupportedIterableToArray(o, minLen) {
+    if (!o) return;
+    if (typeof o === "string") return _arrayLikeToArray(o, minLen);
+    var n = Object.prototype.toString.call(o).slice(8, -1);
+    if (n === "Object" && o.constructor) n = o.constructor.name;
+    if (n === "Map" || n === "Set") return Array.from(o);
+    if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen);
+  }
+
+  function _arrayLikeToArray(arr, len) {
+    if (len == null || len > arr.length) len = arr.length;
+
+    for (var i = 0, arr2 = new Array(len); i < len; i++) arr2[i] = arr[i];
+
+    return arr2;
+  }
+
+  function _nonIterableRest() {
+    throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
+  }
+
   var ncname = "[a-zA-Z_][\\-\\.0-9_a-zA-Z]*"; // 匹配标签名 <aa-aa>
 
   var qnameCapture = "((?:".concat(ncname, "\\:)?").concat(ncname, ")"); //
@@ -27,6 +109,8 @@
   var attribute = /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/; //匹配属性的 a="a" a='a' a=a
 
   var startTagClose = /^\s*(\/?)>/; //匹配标签结束的 >
+
+  var defaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g; // {{ xxx }}
 
   function parseHTML(html) {
     var root;
@@ -64,7 +148,7 @@
     function end(tagName) {
       // console.log('end', tagName)
       //   <div id="app"><p></p> hello </div>
-      console.log(stack);
+      // console.log(stack)
       var element = stack.pop(); //
 
       currentParent = stack[stack.length - 1]; //取出栈中的最后一个
@@ -72,9 +156,8 @@
       if (currentParent) {
         element.parent = currentParent;
         currentParent.children.push(element);
-      }
+      } // console.log(stack)
 
-      console.log(stack);
     }
 
     function chars(text) {
@@ -82,7 +165,7 @@
       text = text.trim();
 
       if (text) {
-        console.log(currentParent);
+        // console.log(currentParent)
         currentParent.children.push({
           type: 3,
           //文本类型
@@ -104,8 +187,8 @@
         }
 
         var endTagMatch = html.match(endTag); //匹配到结束标签
-
-        console.log('endTagMatch', endTagMatch); // break
+        // console.log('endTagMatch',endTagMatch)
+        // break
 
         if (endTagMatch) {
           //处理结束标签
@@ -175,39 +258,110 @@
     return root;
   }
 
-  function _typeof(obj) {
-    "@babel/helpers - typeof";
-
-    return _typeof = "function" == typeof Symbol && "symbol" == typeof Symbol.iterator ? function (obj) {
-      return typeof obj;
-    } : function (obj) {
-      return obj && "function" == typeof Symbol && obj.constructor === Symbol && obj !== Symbol.prototype ? "symbol" : typeof obj;
-    }, _typeof(obj);
+  function generate(ast) {
+    // console.log(ast)
+    var children = genChildren(ast);
+    var code = "_c(".concat(ast.tag, ",").concat(ast.attrs.length ? genProps(ast.attrs) : undefined).concat(children ? ",".concat(children) : '', ")");
+    console.log(code);
+    return code;
   }
 
-  function _classCallCheck(instance, Constructor) {
-    if (!(instance instanceof Constructor)) {
-      throw new TypeError("Cannot call a class as a function");
+  function genProps(attrs) {
+    console.log(attrs);
+    var str = '';
+
+    var _loop = function _loop() {
+      var attr = attrs[i];
+
+      if (attr.name == 'style') {
+        var obj = {};
+        attr.value.split(';').forEach(function (item) {
+          var _item$split = item.split(':'),
+              _item$split2 = _slicedToArray(_item$split, 2),
+              key = _item$split2[0],
+              value = _item$split2[1];
+
+          obj[key] = value;
+          attr.value = obj;
+        });
+      }
+
+      str += "".concat(attr.name, ":").concat(JSON.stringify(attr.value), ",");
+    };
+
+    for (var i = 0; i < attrs.length; i++) {
+      _loop();
+    }
+
+    return "{".concat(str.slice(0, -1), "}");
+  }
+
+  function genChildren(ast) {
+    var children = ast.children;
+
+    if (children) {
+      return children.map(function (child) {
+        return gen(child);
+      }).join(',');
     }
   }
 
-  function _defineProperties(target, props) {
-    for (var i = 0; i < props.length; i++) {
-      var descriptor = props[i];
-      descriptor.enumerable = descriptor.enumerable || false;
-      descriptor.configurable = true;
-      if ("value" in descriptor) descriptor.writable = true;
-      Object.defineProperty(target, descriptor.key, descriptor);
+  function gen(node) {
+    if (node.type === 1) {
+      return generate(node);
+    }
+
+    if (node.type === 3) {
+      var text = node.text;
+
+      if (!defaultTagRE.test(text)) {
+        //  如果是普通文本： 不带{{}}
+        return "_v(".concat(JSON.stringify(text), ")");
+      }
+
+      var tokens = []; //存放每一段代码
+
+      var lastIndex = defaultTagRE.lastIndex = 0; //如果正则是全局模式 需要每次使用前置为零
+
+      var match, index; //每次匹配到的结果和匹配到的索引
+
+      while (match = defaultTagRE.exec(text)) {
+        index = match.index; // console.log(match)
+        // console.log(lastIndex)
+
+        if (index > lastIndex) {
+          tokens.push(JSON.stringify(text.slice(lastIndex, index)));
+        }
+
+        tokens.push("_s(".concat(match[1].trim(), ")"));
+        lastIndex = index + match[0].length;
+      }
+
+      if (lastIndex < text.length) {
+        tokens.push(JSON.stringify(text.slice(lastIndex)));
+      }
+
+      return "_v(".concat(tokens.join("+"), ")");
     }
   }
 
-  function _createClass(Constructor, protoProps, staticProps) {
-    if (protoProps) _defineProperties(Constructor.prototype, protoProps);
-    if (staticProps) _defineProperties(Constructor, staticProps);
-    Object.defineProperty(Constructor, "prototype", {
-      writable: false
-    });
-    return Constructor;
+  function compileToFunctions(template) {
+    // html模版 =》 render函数
+    //1.将html代码转化成ast语法树
+    //  <div id="app"></div>
+    //  {
+    //    attrs:[{id:'app'}],
+    //    tag:'div',
+    //    children:[]
+    //  }
+    var ast = parseHTML(template); // console.log(ast)
+    // 2.通过ast语法树重新生成代码
+
+    var code = generate(ast); // 3.将字符串转换成函数
+
+    var render = new Function("with(this){return ".concat(code, "}"));
+    console.log(render);
+    return render;
   }
 
   function proxy(vm, data, key) {

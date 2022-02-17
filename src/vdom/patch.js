@@ -6,6 +6,8 @@ export function patch(oldVnode, vnode) {
 
   parentNode.insertBefore(el, oldVnode.nextSibling) //当前的真实元素插入到app的后面
   parentNode.removeChild(oldVnode) //删除老的节点
+
+  return el
 }
 
 function createElm(vnode) {

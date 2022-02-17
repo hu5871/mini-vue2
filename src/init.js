@@ -9,7 +9,6 @@ export function initMixin(Vue) {
     //所以需要拿到当前实例的构造函数，如果是子类调用就是子类构造函数
     vm.$options = mergeOptions(vm.constructor.options, options) //将用户自定义的options和全局的options进行合并
     callHook(vm,'beforeCreate')
-    console.log(vm.$options)
     // 初始化状态,data、props、watch、computed
     initState(vm)
     callHook(vm,'created')
@@ -22,7 +21,6 @@ export function initMixin(Vue) {
 
     const vm = this
     el = document.querySelector(el)
-    vm.$el = el
     const options = vm.$options
     if (!options.render) {
       //没有render

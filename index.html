@@ -41,7 +41,11 @@
       },
       created(){
          console.log("跟选项created")
-         console.log(this.obj);
+        //  console.log(this.obj={
+        //    age:29,
+        //    name:"赵六"
+        //  });
+         
       }
       // render(h){
       //   return h('div',{id:'app'},'hello vue2')
@@ -58,8 +62,10 @@
     // 2.模版渲染
     // 渲染操作：先找render方法，如果没有render方法 会查找tamplate选项,如果还没有tamplate，最后找el选项在指定元素中进行渲染
     //ast解析tamplate 》 render函数
-
     
+
+    //vue更新策略是以组件为单位，给每个组件增加了一个watcher，属性变化后会重新调用watcher
+
   </script>
 </body>
 

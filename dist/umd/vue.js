@@ -463,6 +463,8 @@
     parentNode.insertBefore(el, oldVnode.nextSibling); //当前的真实元素插入到app的后面
 
     parentNode.removeChild(oldVnode); //删除老的节点
+
+    return el;
   }
 
   function createElm(vnode) {
@@ -502,19 +504,98 @@
     }
   }
 
+  //多对多的关系  一个属性有一个dep 用来收集watcher
+  // dep 可以存多个watcher
+  //一个watcher 可以对应多个dep
+  var Dep = /*#__PURE__*/function () {
+    function Dep() {
+      _classCallCheck(this, Dep);
+
+      this.subs = [];
+    }
+
+    _createClass(Dep, [{
+      key: "depend",
+      value: function depend() {
+        this.subs.push(Dep.target);
+      }
+    }, {
+      key: "notify",
+      value: function notify() {
+        this.subs.forEach(function (watcher) {
+          watcher.update();
+        });
+      }
+    }]);
+
+    return Dep;
+  }();
+
+  Dep.target = null;
+  function pushTarget(watcher) {
+    Dep.target = watcher;
+  }
+  function popTarget(watcher) {
+    Dep.target = null;
+  }
+
+  var uid = 0;
+
+  var Watcher = /*#__PURE__*/function () {
+    function Watcher(vm, expOrFn, cb, option) {
+      _classCallCheck(this, Watcher);
+
+      this.vm = vm;
+      this.expOrFn = expOrFn;
+      this.cb = cb;
+      this.option = option;
+      this.id = ++uid; //watcher唯一标识
+
+      if (typeof expOrFn === 'function') {
+        this.getter = expOrFn;
+      }
+
+      this.get();
+    }
+
+    _createClass(Watcher, [{
+      key: "get",
+      value: function get() {
+        pushTarget(this);
+        this.getter();
+        popTarget();
+      }
+    }, {
+      key: "updata",
+      value: function updata() {
+        this.get();
+      }
+    }]);
+
+    return Watcher;
+  }();
+
   function lifecycleMixin(Vue) {
     Vue.prototype._update = function (vnode) {
       console.log(vnode);
       var vm = this;
-      patch(vm.$el, vnode);
+      vm.$el = patch(vm.$el, vnode); //用新的元素替换老的vm.$el
     };
   }
   function mountComponent(vm, el) {
+    vm.$el = el;
     callHook(vm, 'beforeMount'); // 调用render渲染el属性
     //先调用render方法创建虚拟节点，再见虚拟节点渲染到页面
+    // vm._update(vm._render())
 
-    vm._update(vm._render());
+    var updateComponent = function updateComponent() {
+      vm._update(vm._render());
+    }; // 这个watcher用于渲染
 
+
+    new Watcher(vm, updateComponent, function () {
+      callHook(vm, 'beforeUpdate');
+    }, true);
     callHook(vm, 'mounted');
   }
   function callHook(vm, hook) {
@@ -602,16 +683,27 @@
 
   function defineReactive(obj, key, value) {
     observe(value);
+    var dep = new Dep(); //每个属性产生一个Dep
+    //当页面取值时 说明这个值用来渲染了，将这个watcher和属性对应起来
+
     Object.defineProperty(obj, key, {
       get: function get() {
-        // console.log('get', value)
+        console.log('get', value);
+        console.log('depTargin', Dep.target);
+
+        if (Dep.target) {
+          dep.depend();
+        }
+
         return value;
       },
       set: function set(newVal) {
         if (newVal === value) return;
         observe(newVal); //如果用户将值改为对象继续拦截添加set和get
 
-        value = newVal; // console.log('set', value)
+        value = newVal;
+        dep.notify();
+        console.log('set', value);
       }
     });
   }
@@ -679,8 +771,7 @@
 
       vm.$options = mergeOptions(vm.constructor.options, options); //将用户自定义的options和全局的options进行合并
 
-      callHook(vm, 'beforeCreate');
-      console.log(vm.$options); // 初始化状态,data、props、watch、computed
+      callHook(vm, 'beforeCreate'); // 初始化状态,data、props、watch、computed
 
       initState(vm);
       callHook(vm, 'created');
@@ -694,7 +785,6 @@
       //  挂载操作
       var vm = this;
       el = document.querySelector(el);
-      vm.$el = el;
       var options = vm.$options;
 
       if (!options.render) {
@@ -721,7 +811,7 @@
       } // 需要挂在这个组件
 
 
-      mountComponent(vm);
+      mountComponent(vm, el);
     };
   }
 
